@@ -33,6 +33,7 @@
 <script>
 import { createJsapiOrder } from '@/services/pay.js'
 import { miniLogin } from '@/services/auth.js'
+import { buildOAuthUrl, getQueryParam, removeQueryParam } from '@/utils/oauth.js'
 
 export default {
   data() {
@@ -82,31 +83,32 @@ export default {
         this.openId = cachedOpenId
         return cachedToken
       }
-      try {
-        const loginRes = await this.wxLogin()
-        const authInfo = await miniLogin(loginRes.code)
-        uni.setStorageSync('token', authInfo.token)
-        uni.setStorageSync('openId', authInfo.openId)
-        this.openId = authInfo.openId
-        return authInfo.token
-      } catch (err) {
-        this.resetToken()
-        throw err
+      const code = getQueryParam('code')
+      if (code) {
+        try {
+          const authInfo = await miniLogin(code)
+          uni.setStorageSync('token', authInfo.token)
+          uni.setStorageSync('openId', authInfo.openId)
+          this.openId = authInfo.openId
+          removeQueryParam('code')
+          return authInfo.token
+        } catch (err) {
+          this.resetToken()
+          throw err
+        }
       }
+      this.redirectToOAuth()
+      throw new Error('正在重定向至微信授权')
+    },
+    redirectToOAuth() {
+      if (typeof window === 'undefined') return
+      const target = buildOAuthUrl()
+      window.location.href = target
     },
     resetToken() {
       uni.removeStorageSync('token')
       uni.removeStorageSync('openId')
       this.openId = ''
-    },
-    wxLogin() {
-      return new Promise((resolve, reject) => {
-        uni.login({
-          provider: 'weixin',
-          success: resolve,
-          fail: (err) => reject(new Error(err?.errMsg || '获取微信登录态失败')),
-        })
-      })
     },
     invokeRequestPayment(params) {
       return new Promise((resolve, reject) => {
