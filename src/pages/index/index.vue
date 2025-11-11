@@ -116,23 +116,40 @@ export default {
           reject(new Error('后端未返回支付参数'))
           return
         }
-        const paymentPayload = {
-          provider: 'wxpay',
+        const payload = {
+          appId: params.appId,
           timeStamp: params.timeStamp,
           nonceStr: params.nonceStr,
           package: params.package,
           signType: params.signType || 'RSA',
           paySign: params.paySign,
         }
-        if (!paymentPayload.timeStamp || !paymentPayload.paySign) {
-          reject(new Error('支付参数不完整'))
-          return
+        const callBridge = () => {
+          if (typeof WeixinJSBridge === 'undefined') {
+            reject(new Error('当前环境未检测到 WeixinJSBridge'))
+            return
+          }
+          WeixinJSBridge.invoke(
+            'getBrandWCPayRequest',
+            payload,
+            (res) => {
+              const msg = res?.err_msg || ''
+              if (msg === 'get_brand_wcpay_request:ok') {
+                resolve(res)
+              } else if (msg === 'get_brand_wcpay_request:cancel') {
+                reject(new Error('支付已取消'))
+              } else {
+                reject(new Error(msg || '支付失败'))
+              }
+            }
+          )
         }
-        uni.requestPayment({
-          ...paymentPayload,
-          success: resolve,
-          fail: (err) => reject(new Error(err?.errMsg || '支付已取消')),
-        })
+
+        if (typeof WeixinJSBridge === 'undefined') {
+          document.addEventListener('WeixinJSBridgeReady', callBridge, false)
+        } else {
+          callBridge()
+        }
       })
     },
   },

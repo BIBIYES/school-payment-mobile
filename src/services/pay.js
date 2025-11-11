@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  import.meta.env?.VITE_API_BASE_URL || "http://localhost:8081";
+import { httpRequest } from "../utils/request";
 
 /**
  * 创建 JSAPI 支付单，返回调起微信支付所需参数
@@ -15,12 +14,13 @@ export function createJsapiOrder(payload) {
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
-    uni.request({
-      url: `${API_BASE_URL}/wx/js-pay`,
+    httpRequest({
+      url: "/wx/js-pay",
       method: "POST",
       header: headers,
       data: payload,
-      success: (res) => {
+    })
+      .then((res) => {
         const body = res.data || {};
         if (body.success && body.data) {
           resolve(body.data);
@@ -31,12 +31,11 @@ export function createJsapiOrder(payload) {
           error.code = body.code || res.statusCode;
           reject(error);
         }
-      },
-      fail: (err) => {
+      })
+      .catch((err) => {
         const error = new Error(err?.errMsg || "网络异常，无法创建支付订单");
         error.code = "NETWORK_ERROR";
         reject(error);
-      },
-    });
+      });
   });
 }
