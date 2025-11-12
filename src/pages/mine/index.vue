@@ -1,176 +1,548 @@
 <template>
   <view class="mine-page">
+    <!-- 用户信息卡片 -->
     <view class="profile-card">
-      <view class="avatar">{{ initials }}</view>
-      <view class="info">
-        <text class="name">重庆机电缴费助手</text>
-        <text class="desc">公众号授权登录</text>
+      <image
+        class="avatar"
+        :src="userInfo.avatarUrl || '/static/default-avatar.png'"
+        mode="aspectFill"
+      />
+      <view class="user-info">
+        <text class="nickname">{{ userInfo.nickname || '未登录' }}</text>
+        <view class="profile-status">
+          <view
+            class="status-badge"
+            :class="{ completed: profileCompleted }"
+          >
+            {{ profileCompleted ? '资料已完善' : '资料未完善' }}
+          </view>
+        </view>
+      </view>
+      <button class="edit-btn" @click="goToProfile">
+        <text class="edit-icon">✎</text>
+      </button>
+    </view>
+
+    <!-- 订单列表 -->
+    <view class="orders-section">
+      <view class="section-header">
+        <text class="section-title">我的订单</text>
+        <text class="order-count" v-if="orders.length > 0">共{{ orders.length }}条</text>
+      </view>
+
+      <view class="loading-state" v-if="loading">
+        <text class="loading-text">加载中...</text>
+      </view>
+
+      <view class="empty-state" v-else-if="orders.length === 0">
+        <text class="empty-icon">📝</text>
+        <text class="empty-text">暂无订单记录</text>
+        <button class="go-pay-btn" @click="goToHome">去缴费</button>
+      </view>
+
+      <view class="order-list" v-else>
+        <view
+          class="order-card"
+          v-for="order in orders"
+          :key="order.id"
+        >
+          <view class="order-header">
+            <text class="order-no">订单号：{{ order.orderNo }}</text>
+            <view
+              class="order-status"
+              :class="{
+                pending: order.paymentStatus === 0,
+                success: order.paymentStatus === 1,
+                failed: order.paymentStatus === 2
+              }"
+            >
+              {{ getStatusText(order.paymentStatus) }}
+            </view>
+          </view>
+
+          <view class="order-body">
+            <view class="order-info-row">
+              <text class="info-label">工种名称</text>
+              <text class="info-value">{{ order.jobName }}</text>
+            </view>
+            <view class="order-info-row">
+              <text class="info-label">批次</text>
+              <text class="info-value">{{ order.batchName }}</text>
+            </view>
+            <view class="order-info-row">
+              <text class="info-label">学期</text>
+              <text class="info-value">{{ order.semester }}</text>
+            </view>
+            <view class="order-info-row">
+              <text class="info-label">创建时间</text>
+              <text class="info-value">{{ formatDate(order.createdAt) }}</text>
+            </view>
+          </view>
+
+          <view class="order-footer">
+            <view class="price-section">
+              <text class="price-label">缴费金额</text>
+              <view class="price-wrapper">
+                <text class="price-symbol">¥</text>
+                <text class="price-value">{{ (order.amount / 100).toFixed(2) }}</text>
+              </view>
+            </view>
+            <button
+              v-if="order.paymentStatus === 0"
+              class="continue-pay-btn"
+              @click="handleContinuePay(order)"
+              :disabled="paying"
+            >
+              {{ paying ? '处理中...' : '继续支付' }}
+            </button>
+          </view>
+        </view>
       </view>
     </view>
 
-    <view class="section">
-      <view class="section-title">当前登录态</view>
-      <view class="field">
-        <text class="field-label">OpenID</text>
-        <text class="field-value">{{ openId || '未登录' }}</text>
-      </view>
-      <view class="field">
-        <text class="field-label">Token</text>
-        <text class="field-value">{{ tokenPreview }}</text>
-      </view>
-    </view>
-
-    <view class="section">
-      <button class="action-btn primary" @click="navigateHome">返回首页缴费</button>
-      <button class="action-btn ghost" @click="redirectToOAuth">重新获取登录态</button>
-      <button class="action-btn danger" @click="clearAuth">退出登录</button>
+    <!-- 退出登录 -->
+    <view class="logout-section">
+      <button class="logout-btn" @click="handleLogout">退出登录</button>
     </view>
   </view>
 </template>
 
 <script>
-import { buildOAuthUrl } from '@/utils/oauth.js'
+import { getMyOrders, createPayment } from '@/services/order.js'
 
 export default {
   data() {
     return {
-      openId: '',
-      token: '',
+      userInfo: {
+        nickname: '',
+        avatarUrl: '',
+      },
+      profileCompleted: false,
+      orders: [],
+      loading: false,
+      paying: false,
     }
   },
-  computed: {
-    tokenPreview() {
-      if (!this.token) return '未生成'
-      return `${this.token.slice(0, 12)}...`
-    },
-    initials() {
-      return this.openId ? this.openId.slice(-2).toUpperCase() : '机电'
-    },
-  },
   onShow() {
-    this.syncAuth()
+    this.loadUserInfo()
+    this.loadOrders()
   },
   methods: {
-    syncAuth() {
-      this.openId = uni.getStorageSync('openId') || ''
-      this.token = uni.getStorageSync('token') || ''
+    loadUserInfo() {
+      const nickname = uni.getStorageSync('nickname')
+      const avatarUrl = uni.getStorageSync('avatarUrl')
+      const profileCompleted = uni.getStorageSync('profileCompleted')
+
+      this.userInfo.nickname = nickname || '未登录'
+      this.userInfo.avatarUrl = avatarUrl || ''
+      this.profileCompleted = profileCompleted || false
     },
-    clearAuth() {
-      uni.removeStorageSync('token')
-      uni.removeStorageSync('openId')
-      this.syncAuth()
-      uni.showToast({ title: '已退出' })
+    async loadOrders() {
+      try {
+        this.loading = true
+        const data = await getMyOrders()
+        this.orders = data || []
+      } catch (err) {
+        const message = err?.message || '加载订单失败'
+        console.error('加载订单失败:', err)
+        uni.showToast({ title: message, icon: 'none' })
+      } finally {
+        this.loading = false
+      }
     },
-    navigateHome() {
+    goToProfile() {
+      uni.navigateTo({ url: '/pages/profile/profile' })
+    },
+    goToHome() {
       uni.switchTab({ url: '/pages/index/index' })
     },
-    redirectToOAuth() {
-      if (typeof window === 'undefined') return
-      this.clearAuth()
-      window.location.href = buildOAuthUrl()
+    getStatusText(status) {
+      const statusMap = {
+        0: '待支付',
+        1: '已支付',
+        2: '支付失败'
+      }
+      return statusMap[status] || '未知'
+    },
+    formatDate(timestamp) {
+      if (!timestamp) return '-'
+      const date = new Date(timestamp)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hour = String(date.getHours()).padStart(2, '0')
+      const minute = String(date.getMinutes()).padStart(2, '0')
+      return `${year}-${month}-${day} ${hour}:${minute}`
+    },
+    async handleContinuePay(order) {
+      try {
+        this.paying = true
+        uni.showLoading({ title: '正在调起支付...' })
+
+        const payParams = await createPayment(order.orderNo)
+        await this.invokeWxPayment(payParams)
+
+        uni.showToast({ title: '支付成功', icon: 'success' })
+
+        // 延迟刷新订单列表
+        setTimeout(() => {
+          this.loadOrders()
+        }, 1500)
+      } catch (err) {
+        const message = err?.message || '支付失败'
+        uni.showToast({ title: message, icon: 'none' })
+      } finally {
+        this.paying = false
+        uni.hideLoading()
+      }
+    },
+    invokeWxPayment(params) {
+      return new Promise((resolve, reject) => {
+        // 对于微信小程序
+        if (uni.requestPayment) {
+          uni.requestPayment({
+            provider: 'wxpay',
+            timeStamp: params.timeStamp,
+            nonceStr: params.nonceStr,
+            package: params.package,
+            signType: params.signType || 'RSA',
+            paySign: params.paySign,
+            success: resolve,
+            fail: (err) => {
+              if (err.errMsg === 'requestPayment:fail cancel') {
+                reject(new Error('支付已取消'))
+              } else {
+                reject(new Error(err.errMsg || '支付失败'))
+              }
+            },
+          })
+        }
+        // 对于H5公众号环境
+        else if (typeof WeixinJSBridge !== 'undefined') {
+          WeixinJSBridge.invoke(
+            'getBrandWCPayRequest',
+            {
+              appId: params.appId,
+              timeStamp: params.timeStamp,
+              nonceStr: params.nonceStr,
+              package: params.package,
+              signType: params.signType || 'RSA',
+              paySign: params.paySign,
+            },
+            (res) => {
+              const msg = res?.err_msg || ''
+              if (msg === 'get_brand_wcpay_request:ok') {
+                resolve(res)
+              } else if (msg === 'get_brand_wcpay_request:cancel') {
+                reject(new Error('支付已取消'))
+              } else {
+                reject(new Error(msg || '支付失败'))
+              }
+            }
+          )
+        } else {
+          reject(new Error('当前环境不支持微信支付'))
+        }
+      })
+    },
+    handleLogout() {
+      uni.showModal({
+        title: '提示',
+        content: '确定要退出登录吗？',
+        success: (res) => {
+          if (res.confirm) {
+            // 清除本地存储
+            uni.removeStorageSync('token')
+            uni.removeStorageSync('openId')
+            uni.removeStorageSync('nickname')
+            uni.removeStorageSync('avatarUrl')
+            uni.removeStorageSync('profileCompleted')
+
+            uni.showToast({ title: '已退出登录', icon: 'success' })
+
+            // 延迟后跳转到首页
+            setTimeout(() => {
+              uni.reLaunch({ url: '/pages/index/index' })
+            }, 1500)
+          }
+        },
+      })
     },
   },
 }
 </script>
 
-<style>
+<style scoped>
 .mine-page {
   min-height: 100vh;
-  padding: 48rpx 32rpx 120rpx;
-  background: linear-gradient(180deg, #0f62fe 0%, #f2f5fa 30%);
-  box-sizing: border-box;
+  background: #f6f7fb;
+  padding-bottom: 120rpx;
 }
 
+/* 用户信息卡片 */
 .profile-card {
+  background: linear-gradient(135deg, #0f62fe 0%, #1b57ff 100%);
+  padding: 48rpx 32rpx;
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 24rpx;
-  padding: 32rpx;
-  color: #fff;
-  margin-bottom: 32rpx;
-  backdrop-filter: blur(6px);
+  position: relative;
 }
 
 .avatar {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 48rpx;
-  background: rgba(255, 255, 255, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 30rpx;
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.3);
   margin-right: 24rpx;
 }
 
-.info .name {
-  font-size: 32rpx;
-  font-weight: 600;
+.user-info {
+  flex: 1;
 }
 
-.info .desc {
+.nickname {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 12rpx;
+}
+
+.profile-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-badge {
+  padding: 8rpx 20rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 32rpx;
   font-size: 24rpx;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.8);
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
 }
 
-.section {
-  background: #fff;
-  border-radius: 24rpx;
+.status-badge.completed {
+  background: rgba(82, 196, 26, 0.2);
+  color: #52c41a;
+  border-color: #52c41a;
+}
+
+.edit-btn {
+  width: 72rpx;
+  height: 72rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 36rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.edit-icon {
+  font-size: 32rpx;
+  color: #fff;
+}
+
+/* 订单列表 */
+.orders-section {
   padding: 32rpx;
-  margin-bottom: 32rpx;
-  box-shadow: 0 12rpx 32rpx rgba(15, 98, 254, 0.08);
 }
 
-.section-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #1f2a44;
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 24rpx;
 }
 
-.field {
-  margin-bottom: 20rpx;
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2a44;
 }
 
-.field-label {
+.order-count {
   font-size: 24rpx;
   color: #8a8ea3;
 }
 
-.field-value {
-  display: block;
-  margin-top: 8rpx;
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 120rpx 0;
+  background: #fff;
+  border-radius: 24rpx;
+}
+
+.loading-text {
   font-size: 28rpx;
-  color: #1f2a44;
-  word-break: break-all;
+  color: #8a8ea3;
 }
 
-.action-btn {
-  width: 100%;
-  margin-bottom: 20rpx;
-  border-radius: 44rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-  font-size: 30rpx;
+.empty-icon {
+  display: block;
+  font-size: 96rpx;
+  margin-bottom: 24rpx;
 }
 
-.action-btn.primary {
+.empty-text {
+  display: block;
+  font-size: 28rpx;
+  color: #8a8ea3;
+  margin-bottom: 32rpx;
+}
+
+.go-pay-btn {
+  margin: 0 auto;
+  width: 200rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  background: linear-gradient(90deg, #1b57ff, #0f62fe);
+  border-radius: 36rpx;
+  font-size: 28rpx;
   color: #fff;
-  background-image: linear-gradient(90deg, #1b57ff, #0f62fe);
   border: none;
 }
 
-.action-btn.ghost {
-  color: #0f62fe;
-  border: 2rpx solid rgba(15, 98, 254, 0.3);
-  background: #f6f8ff;
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
 }
 
-.action-btn.danger {
+.order-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(15, 98, 254, 0.06);
+}
+
+.order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20rpx;
+  border-bottom: 2rpx solid #f0f2f7;
+  margin-bottom: 20rpx;
+}
+
+.order-no {
+  font-size: 24rpx;
+  color: #8a8ea3;
+}
+
+.order-status {
+  padding: 6rpx 16rpx;
+  border-radius: 24rpx;
+  font-size: 24rpx;
+}
+
+.order-status.pending {
+  background: #fff7e6;
+  color: #fa8c16;
+}
+
+.order-status.success {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.order-status.failed {
+  background: #fff1f0;
+  color: #ff4d4f;
+}
+
+.order-body {
+  margin-bottom: 20rpx;
+}
+
+.order-info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.order-info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-label {
+  font-size: 26rpx;
+  color: #8a8ea3;
+}
+
+.info-value {
+  font-size: 26rpx;
+  color: #1f2a44;
+  font-weight: 500;
+}
+
+.order-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 20rpx;
+  border-top: 2rpx solid #f0f2f7;
+}
+
+.price-section {
+  flex: 1;
+}
+
+.price-label {
+  display: block;
+  font-size: 24rpx;
+  color: #8a8ea3;
+  margin-bottom: 8rpx;
+}
+
+.price-wrapper {
+  display: flex;
+  align-items: flex-end;
+}
+
+.price-symbol {
+  font-size: 24rpx;
   color: #ff5c5c;
-  border: 2rpx solid rgba(255, 92, 92, 0.4);
-  background: #fff5f5;
+  margin-right: 4rpx;
+}
+
+.price-value {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #ff5c5c;
+}
+
+.continue-pay-btn {
+  padding: 0 32rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  background: linear-gradient(90deg, #1b57ff, #0f62fe);
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #fff;
+  border: none;
+}
+
+.continue-pay-btn[disabled] {
+  opacity: 0.6;
+}
+
+/* 退出登录 */
+.logout-section {
+  padding: 32rpx;
+}
+
+.logout-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  background: #fff;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  color: #ff5c5c;
+  border: 2rpx solid #ffccc7;
 }
 </style>

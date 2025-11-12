@@ -8,10 +8,19 @@ function resolveUrl(url = "") {
 }
 
 export function httpRequest(options = {}) {
-  const { url = "", ...rest } = options;
+  const { url = "", header = {}, ...rest } = options;
+
+  // 自动添加 Authorization header
+  const token = uni.getStorageSync("token");
+  const finalHeaders = { ...header };
+  if (token && !finalHeaders.Authorization) {
+    finalHeaders.Authorization = `Bearer ${token}`;
+  }
+
   return new Promise((resolve, reject) => {
     uni.request({
       url: resolveUrl(url),
+      header: finalHeaders,
       ...rest,
       success: resolve,
       fail: reject,
