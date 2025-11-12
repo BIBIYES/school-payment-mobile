@@ -1,8 +1,6 @@
 <template>
   <view class="profile-page">
     <view class="form-container">
-      <view class="form-title">个人信息</view>
-
       <view class="form-item required">
         <view class="form-label">姓名</view>
         <input
@@ -38,11 +36,19 @@
         <view class="form-label">性别</view>
         <radio-group class="radio-group" @change="handleGenderChange">
           <label class="radio-item">
-            <radio :value="'男'" :checked="formData.gender === '男'" color="#0f62fe"/>
+            <radio
+              :value="'男'"
+              :checked="formData.gender === '男'"
+              color="#0f62fe"
+            />
             <text>男</text>
           </label>
           <label class="radio-item">
-            <radio :value="'女'" :checked="formData.gender === '女'" color="#0f62fe"/>
+            <radio
+              :value="'女'"
+              :checked="formData.gender === '女'"
+              color="#0f62fe"
+            />
             <text>女</text>
           </label>
         </radio-group>
@@ -144,11 +150,19 @@
         <view class="form-label">户籍性质</view>
         <radio-group class="radio-group" @change="handleHouseholdChange">
           <label class="radio-item">
-            <radio :value="'农村'" :checked="formData.householdType === '农村'" color="#0f62fe"/>
+            <radio
+              :value="'农村'"
+              :checked="formData.householdType === '农村'"
+              color="#0f62fe"
+            />
             <text>农村</text>
           </label>
           <label class="radio-item">
-            <radio :value="'城市'" :checked="formData.householdType === '城市'" color="#0f62fe"/>
+            <radio
+              :value="'城市'"
+              :checked="formData.householdType === '城市'"
+              color="#0f62fe"
+            />
             <text>城市</text>
           </label>
         </radio-group>
@@ -171,7 +185,7 @@
           :disabled="submitting"
           @click="handleSubmit"
         >
-          {{ submitting ? '提交中...' : '保存信息' }}
+          {{ submitting ? "提交中..." : "保存信息" }}
         </button>
       </view>
     </view>
@@ -179,153 +193,157 @@
 </template>
 
 <script>
-import { getProfile, updateProfile } from '@/services/student.js'
+import { getProfile, updateProfile } from "@/services/student.js";
 
 export default {
   data() {
     return {
       formData: {
-        name: '',
-        idCard: '',
-        studentNo: '',
-        gender: '',
-        department: '',
-        major: '',
-        phone: '',
-        grade: '',
-        className: '',
-        nation: '',
-        politicalStatus: '',
-        education: '',
-        address: '',
-        householdType: '',
-        instructor: '',
+        name: "",
+        idCard: "",
+        studentNo: "",
+        gender: "",
+        department: "",
+        major: "",
+        phone: "",
+        grade: "",
+        className: "",
+        nation: "",
+        politicalStatus: "",
+        education: "",
+        address: "",
+        householdType: "",
+        instructor: "",
       },
       submitting: false,
       loading: false,
-    }
+    };
   },
   onLoad() {
-    this.loadProfile()
+    this.loadProfile();
   },
   methods: {
     async loadProfile() {
       try {
-        this.loading = true
-        uni.showLoading({ title: '加载中...' })
-        const profile = await getProfile()
+        this.loading = true;
+        uni.showLoading({ title: "加载中..." });
+        const profile = await getProfile();
         if (profile) {
           this.formData = {
-            name: profile.name || '',
-            idCard: profile.idCard || '',
-            studentNo: profile.studentNo || '',
-            gender: profile.gender || '',
-            department: profile.department || '',
-            major: profile.major || '',
-            phone: profile.phone || '',
-            grade: profile.grade || '',
-            className: profile.className || '',
-            nation: profile.nation || '',
-            politicalStatus: profile.politicalStatus || '',
-            education: profile.education || '',
-            address: profile.address || '',
-            householdType: profile.householdType || '',
-            instructor: profile.instructor || '',
-          }
+            name: profile.name || "",
+            idCard: profile.idCard || "",
+            studentNo: profile.studentNo || "",
+            gender: profile.gender || "",
+            department: profile.department || "",
+            major: profile.major || "",
+            phone: profile.phone || "",
+            grade: profile.grade || "",
+            className: profile.className || "",
+            nation: profile.nation || "",
+            politicalStatus: profile.politicalStatus || "",
+            education: profile.education || "",
+            address: profile.address || "",
+            householdType: profile.householdType || "",
+            instructor: profile.instructor || "",
+          };
         }
       } catch (err) {
-        console.error('加载个人信息失败:', err)
+        console.error("加载个人信息失败:", err);
         // 不显示错误提示，允许用户填写新信息
       } finally {
-        this.loading = false
-        uni.hideLoading()
+        this.loading = false;
+        uni.hideLoading();
       }
     },
     handleGenderChange(e) {
-      this.formData.gender = e.detail.value
+      this.formData.gender = e.detail.value;
     },
     handleHouseholdChange(e) {
-      this.formData.householdType = e.detail.value
+      this.formData.householdType = e.detail.value;
     },
     validateForm() {
-      const { name, idCard, studentNo, gender, department, major, phone } = this.formData
+      const { name, idCard, studentNo, gender, department, major, phone } =
+        this.formData;
 
       if (!name || !name.trim()) {
-        uni.showToast({ title: '请输入姓名', icon: 'none' })
-        return false
+        uni.showToast({ title: "请输入姓名", icon: "none" });
+        return false;
       }
       if (!idCard || !idCard.trim()) {
-        uni.showToast({ title: '请输入身份证号', icon: 'none' })
-        return false
+        uni.showToast({ title: "请输入身份证号", icon: "none" });
+        return false;
       }
-      if (!/^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/.test(idCard)) {
-        uni.showToast({ title: '身份证号格式不正确', icon: 'none' })
-        return false
+      if (
+        !/^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/.test(
+          idCard
+        )
+      ) {
+        uni.showToast({ title: "身份证号格式不正确", icon: "none" });
+        return false;
       }
       if (!studentNo || !studentNo.trim()) {
-        uni.showToast({ title: '请输入学号', icon: 'none' })
-        return false
+        uni.showToast({ title: "请输入学号", icon: "none" });
+        return false;
       }
       if (!gender) {
-        uni.showToast({ title: '请选择性别', icon: 'none' })
-        return false
+        uni.showToast({ title: "请选择性别", icon: "none" });
+        return false;
       }
       if (!department || !department.trim()) {
-        uni.showToast({ title: '请输入院系', icon: 'none' })
-        return false
+        uni.showToast({ title: "请输入院系", icon: "none" });
+        return false;
       }
       if (!major || !major.trim()) {
-        uni.showToast({ title: '请输入专业', icon: 'none' })
-        return false
+        uni.showToast({ title: "请输入专业", icon: "none" });
+        return false;
       }
       if (!phone || !phone.trim()) {
-        uni.showToast({ title: '请输入手机号', icon: 'none' })
-        return false
+        uni.showToast({ title: "请输入手机号", icon: "none" });
+        return false;
       }
       if (!/^1[3-9]\d{9}$/.test(phone)) {
-        uni.showToast({ title: '手机号格式不正确', icon: 'none' })
-        return false
+        uni.showToast({ title: "手机号格式不正确", icon: "none" });
+        return false;
       }
 
-      return true
+      return true;
     },
     async handleSubmit() {
       if (!this.validateForm()) {
-        return
+        return;
       }
 
       try {
-        this.submitting = true
-        uni.showLoading({ title: '提交中...' })
+        this.submitting = true;
+        uni.showLoading({ title: "提交中..." });
 
-        await updateProfile(this.formData)
+        await updateProfile(this.formData);
 
         // 更新本地存储的资料完成状态
-        uni.setStorageSync('profileCompleted', true)
+        uni.setStorageSync("profileCompleted", true);
 
-        uni.showToast({ title: '保存成功', icon: 'success' })
+        uni.showToast({ title: "保存成功", icon: "success" });
 
         // 延迟返回，让用户看到成功提示
         setTimeout(() => {
-          uni.navigateBack()
-        }, 1500)
+          uni.navigateBack();
+        }, 1500);
       } catch (err) {
-        const message = err?.message || '保存失败，请重试'
-        uni.showToast({ title: message, icon: 'none' })
+        const message = err?.message || "保存失败，请重试";
+        uni.showToast({ title: message, icon: "none" });
       } finally {
-        this.submitting = false
-        uni.hideLoading()
+        this.submitting = false;
+        uni.hideLoading();
       }
     },
   },
-}
+};
 </script>
 
 <style scoped>
 .profile-page {
   min-height: 100vh;
   background: #f6f7fb;
-  padding: 32rpx;
   box-sizing: border-box;
 }
 
@@ -349,7 +367,7 @@ export default {
 }
 
 .form-item.required .form-label::after {
-  content: '*';
+  content: "*";
   color: #ff5c5c;
   margin-left: 8rpx;
 }
