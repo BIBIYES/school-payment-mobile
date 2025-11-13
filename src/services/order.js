@@ -17,7 +17,7 @@ export function createOrder(data) {
       headers.Authorization = `Bearer ${token}`;
     }
     httpRequest({
-      url: "/api/orders/create",
+      url: "/api/payment-records/create",
       method: "POST",
       header: headers,
       data: data,
@@ -53,7 +53,7 @@ export function getMyOrders() {
       headers.Authorization = `Bearer ${token}`;
     }
     httpRequest({
-      url: "/api/orders/list",
+      url: "/api/payment-records/list",
       method: "GET",
       header: headers,
     })
@@ -93,7 +93,7 @@ export function getOrderDetail(orderNo) {
       headers.Authorization = `Bearer ${token}`;
     }
     httpRequest({
-      url: `/api/orders/${orderNo}`,
+      url: `/api/payment-records/${orderNo}`,
       method: "GET",
       header: headers,
     })
