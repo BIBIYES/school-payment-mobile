@@ -70,15 +70,15 @@ The mobile app has been completely redesigned and implemented with modern UI/UX 
 > Note: If the app is opened outside of the WeChat browser, a modal prompts the user to switch to WeChat because OAuth cannot complete elsewhere.
 
 ### Profile Management
-- **GET** `/api/public/students/profile` - Get current student profile
-- **PUT** `/api/public/students/profile` - Update student profile
+- **GET** `/api/students/profile` - Get current student profile
+- **PUT** `/api/students/profile` - Update student profile
 
 ### Job Types
-- **GET** `/api/public/job-types/list` - Get all available job types
+- **GET** `/api/job-types/list` - Get all available job types
 
 ### Orders
-- **POST** `/api/public/orders/create` - Create new order (jobTypeId, batchName, semester)
-- **GET** `/api/public/orders/list` - Get student's order history
+- **POST** `/api/orders/create` - Create new order (jobTypeId, batchName, semester)
+- **GET** `/api/orders/list` - Get student's order history
 
 ### Payment
 - **POST** `/wx/js-pay` - Create WeChat payment with orderNo
@@ -122,7 +122,7 @@ The app stores the following in local storage:
 3. 完成后弹出批次/学期输入框，用户填写并提交。
 4. App 向后端创建订单，得到 `orderNo`/`id`。
 5. 创建成功后统一跳转到 `pages/cashier/cashier` 收银台页面，并附带订单号。
-6. 收银台页面调用 `/api/public/orders/{orderNo}` 拉取订单详情，展示金额、批次、创建时间、5 分钟倒计时等信息。
+6. 收银台页面调用 `/api/orders/{orderNo}` 拉取订单详情，展示金额、批次、创建时间、5 分钟倒计时等信息。
 7. 用户点击“立即支付”时，收银台调用 `/wx/js-pay` 获取 JSAPI 参数，然后调起 `uni.requestPayment`/`WeixinJSBridge.invoke`。
 8. 支付成功后跳转到“我的”页刷新订单；失败或超时则提示用户并允许重新下单。
 
@@ -151,11 +151,12 @@ The app stores the following in local storage:
 ### Backend Integration
 Ensure these backend APIs are implemented:
 - POST `/api/users/wechat/login` - Should accept { code, nickname, avatarUrl }
-- GET `/api/public/students/profile` - Return student profile for current user
-- PUT `/api/public/students/profile` - Update student profile
-- GET `/api/public/job-types/list` - Return all active job types
-- POST `/api/public/orders/create` - Create order { jobTypeId, batchName, semester }
-- GET `/api/public/orders/list` - Return orders for current student
+- POST `/api/students` - Submit base profile info (StudentSubmitRequest)
+- GET `/api/students/profile` - Return student profile for current user
+- PUT `/api/students/profile` - Update student profile
+- GET `/api/job-types/list` - Return all active job types
+- POST `/api/orders/create` - Create order { jobTypeId, batchName, semester }
+- GET `/api/orders/list` - Return orders for current student
 - POST `/wx/js-pay` - Create WeChat payment params
 
 ### Testing Checklist

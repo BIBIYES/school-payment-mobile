@@ -13,7 +13,7 @@ export function getProfile() {
       headers.Authorization = `Bearer ${token}`;
     }
     httpRequest({
-      url: "/api/public/students/profile",
+      url: "/api/students/profile",
       method: "GET",
       header: headers,
     })
@@ -49,7 +49,7 @@ export function updateProfile(data) {
       headers.Authorization = `Bearer ${token}`;
     }
     httpRequest({
-      url: "/api/public/students/profile",
+      url: "/api/students/profile",
       method: "PUT",
       header: headers,
       data: data,

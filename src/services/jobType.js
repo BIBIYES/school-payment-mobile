@@ -6,7 +6,7 @@ import { httpRequest } from "../utils/request";
 export function getJobTypeList() {
   return new Promise((resolve, reject) => {
     httpRequest({
-      url: "/api/public/job-types/list",
+      url: "/api/job-types/list",
       method: "GET",
       header: {
         "content-type": "application/json",
