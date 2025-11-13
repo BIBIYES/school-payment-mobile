@@ -51,12 +51,13 @@
             <view
               class="order-status"
               :class="{
-                pending: order.paymentStatus === 0,
-                success: order.paymentStatus === 1,
-                failed: order.paymentStatus === 2
+                pending: getStatusCode(order) === 0,
+                success: getStatusCode(order) === 1,
+                failed: getStatusCode(order) === 2,
+                expired: getStatusCode(order) === 3
               }"
             >
-              {{ getStatusText(order.paymentStatus) }}
+              {{ getStatusText(order) }}
             </view>
           </view>
 
@@ -84,16 +85,15 @@
               <text class="price-label">缴费金额</text>
               <view class="price-wrapper">
                 <text class="price-symbol">¥</text>
-                <text class="price-value">{{ (order.amount / 100).toFixed(2) }}</text>
+                <text class="price-value">{{ formatAmount(order) }}</text>
               </view>
             </view>
             <button
-              v-if="order.paymentStatus === 0"
+              v-if="getStatusCode(order) === 0"
               class="continue-pay-btn"
               @click="handleContinuePay(order)"
-              :disabled="paying"
             >
-              {{ paying ? '处理中...' : '继续支付' }}
+              继续支付
             </button>
           </view>
         </view>
@@ -108,7 +108,7 @@
 </template>
 
 <script>
-import { getMyOrders, createPayment } from '@/services/order.js'
+import { getMyOrders } from '@/services/order.js'
 
 export default {
   data() {
@@ -120,7 +120,6 @@ export default {
       profileCompleted: false,
       orders: [],
       loading: false,
-      paying: false,
     }
   },
   onShow() {
@@ -156,13 +155,37 @@ export default {
     goToHome() {
       uni.switchTab({ url: '/pages/index/index' })
     },
-    getStatusText(status) {
+    getStatusCode(order) {
+      if (!order) return -1
+      if (order.payStatus !== undefined && order.payStatus !== null) {
+        return order.payStatus
+      }
+      if (order.paymentStatus !== undefined && order.paymentStatus !== null) {
+        return order.paymentStatus
+      }
+      return -1
+    },
+    getStatusText(order) {
+      const status = this.getStatusCode(order)
       const statusMap = {
         0: '待支付',
         1: '已支付',
-        2: '支付失败'
+        2: '支付失败',
+        3: '已过期'
       }
       return statusMap[status] || '未知'
+    },
+    formatAmount(order) {
+      const value = order?.payAmount ?? order?.amount
+      if (value === undefined || value === null || value === '') {
+        return '0.00'
+      }
+      const num = Number(value)
+      if (!Number.isNaN(num)) {
+        return num.toFixed(2)
+      }
+      const parsed = parseFloat(value)
+      return Number.isNaN(parsed) ? '0.00' : parsed.toFixed(2)
     },
     formatDate(timestamp) {
       if (!timestamp) return '-'
@@ -174,75 +197,13 @@ export default {
       const minute = String(date.getMinutes()).padStart(2, '0')
       return `${year}-${month}-${day} ${hour}:${minute}`
     },
-    async handleContinuePay(order) {
-      try {
-        this.paying = true
-        uni.showLoading({ title: '正在调起支付...' })
-
-        const payParams = await createPayment(order.orderNo)
-        await this.invokeWxPayment(payParams)
-
-        uni.showToast({ title: '支付成功', icon: 'success' })
-
-        // 延迟刷新订单列表
-        setTimeout(() => {
-          this.loadOrders()
-        }, 1500)
-      } catch (err) {
-        const message = err?.message || '支付失败'
-        uni.showToast({ title: message, icon: 'none' })
-      } finally {
-        this.paying = false
-        uni.hideLoading()
+    handleContinuePay(order) {
+      if (!order || !order.orderNo) {
+        uni.showToast({ title: '订单信息缺失', icon: 'none' })
+        return
       }
-    },
-    invokeWxPayment(params) {
-      return new Promise((resolve, reject) => {
-        // 对于微信小程序
-        if (uni.requestPayment) {
-          uni.requestPayment({
-            provider: 'wxpay',
-            timeStamp: params.timeStamp,
-            nonceStr: params.nonceStr,
-            package: params.package,
-            signType: params.signType || 'RSA',
-            paySign: params.paySign,
-            success: resolve,
-            fail: (err) => {
-              if (err.errMsg === 'requestPayment:fail cancel') {
-                reject(new Error('支付已取消'))
-              } else {
-                reject(new Error(err.errMsg || '支付失败'))
-              }
-            },
-          })
-        }
-        // 对于H5公众号环境
-        else if (typeof WeixinJSBridge !== 'undefined') {
-          WeixinJSBridge.invoke(
-            'getBrandWCPayRequest',
-            {
-              appId: params.appId,
-              timeStamp: params.timeStamp,
-              nonceStr: params.nonceStr,
-              package: params.package,
-              signType: params.signType || 'RSA',
-              paySign: params.paySign,
-            },
-            (res) => {
-              const msg = res?.err_msg || ''
-              if (msg === 'get_brand_wcpay_request:ok') {
-                resolve(res)
-              } else if (msg === 'get_brand_wcpay_request:cancel') {
-                reject(new Error('支付已取消'))
-              } else {
-                reject(new Error(msg || '支付失败'))
-              }
-            }
-          )
-        } else {
-          reject(new Error('当前环境不支持微信支付'))
-        }
+      uni.navigateTo({
+        url: `/pages/cashier/cashier?orderNo=${order.orderNo}`,
       })
     },
     handleLogout() {
@@ -452,6 +413,11 @@ export default {
 .order-status.failed {
   background: #fff1f0;
   color: #ff4d4f;
+}
+
+.order-status.expired {
+  background: #f5f5f5;
+  color: #999;
 }
 
 .order-body {

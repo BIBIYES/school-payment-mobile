@@ -1,51 +1,58 @@
 {
-	"pages": [
-		{
-			"path": "pages/index/index",
-			"style": {
-				"navigationBarTitleText": "首页",
-				"navigationBarBackgroundColor": "#0f62fe",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/mine/index",
-			"style": {
-				"navigationBarTitleText": "我的",
-				"navigationBarBackgroundColor": "#0f62fe",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/profile/profile",
-			"style": {
-				"navigationBarTitleText": "个人信息",
-				"navigationBarBackgroundColor": "#0f62fe",
-				"navigationBarTextStyle": "white"
-			}
-		}
-	],
-	"tabBar": {
-		"color": "#8a8ea3",
-		"selectedColor": "#0f62fe",
-		"backgroundColor": "#ffffff",
-		"borderStyle": "black",
-		"list": [
-			{
-				"pagePath": "pages/index/index",
-				"text": "首页"
-			},
-			{
-				"pagePath": "pages/mine/index",
-				"text": "我的"
-			}
-		]
-	},
-	"globalStyle": {
-		"navigationBarTextStyle": "white",
-		"navigationBarTitleText": "学校缴费系统",
-		"navigationBarBackgroundColor": "#0f62fe",
-		"backgroundColor": "#f6f7fb",
-		"navigationStyle": "custom"
-	}
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "首页",
+        "navigationBarBackgroundColor": "#0f62fe",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationBarBackgroundColor": "#0f62fe",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/cashier/cashier",
+      "style": {
+        "navigationBarTitleText": "收银台",
+        "navigationBarBackgroundColor": "#0f62fe",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "个人信息",
+        "navigationBarBackgroundColor": "#0f62fe",
+        "navigationBarTextStyle": "white"
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#8a8ea3",
+    "selectedColor": "#0f62fe",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "学校缴费系统",
+    "navigationBarBackgroundColor": "#0f62fe",
+    "backgroundColor": "#f6f7fb"
+  }
 }

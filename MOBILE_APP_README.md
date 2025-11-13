@@ -117,16 +117,14 @@ The app stores the following in local storage:
 
 ## Payment Flow
 
-1. User clicks "Pay Now" on a job type
-2. App checks if profile is completed
-3. If not completed, shows modal to redirect to profile page
-4. If completed, shows payment dialog for batch name and semester
-5. User fills in batch name and semester, clicks "Confirm Payment"
-6. App creates order via API
-7. App creates payment via API (gets WeChat payment params)
-8. App calls `uni.requestPayment()` (mini-program) or `WeixinJSBridge.invoke()` (H5)
-9. On success, navigates to Mine page to show order
-10. On failure, shows error message
+1. User clicks "Pay Now" on a job type。
+2. App checks if profile is completed；未完成则弹窗跳转资料页。
+3. 完成后弹出批次/学期输入框，用户填写并提交。
+4. App 向后端创建订单，得到 `orderNo`/`id`。
+5. 创建成功后统一跳转到 `pages/cashier/cashier` 收银台页面，并附带订单号。
+6. 收银台页面调用 `/api/public/orders/{orderNo}` 拉取订单详情，展示金额、批次、创建时间、5 分钟倒计时等信息。
+7. 用户点击“立即支付”时，收银台调用 `/wx/js-pay` 获取 JSAPI 参数，然后调起 `uni.requestPayment`/`WeixinJSBridge.invoke`。
+8. 支付成功后跳转到“我的”页刷新订单；失败或超时则提示用户并允许重新下单。
 
 ## Error Handling
 

@@ -110,9 +110,9 @@
           <button
             class="modal-btn confirm-btn"
             @click="confirmPayment"
-            :disabled="!paymentForm.batchName || !paymentForm.semester"
+            :disabled="paying || !paymentForm.batchName || !paymentForm.semester"
           >
-            确认缴费
+            {{ paying ? '处理中...' : '确认缴费' }}
           </button>
         </view>
       </view>
@@ -123,7 +123,7 @@
 <script>
 import { miniLogin } from '@/services/auth.js'
 import { getJobTypeList } from '@/services/jobType.js'
-import { createOrder, createPayment } from '@/services/order.js'
+import { createOrder } from '@/services/order.js'
 import { getProfile } from '@/services/student.js'
 import {
   buildOAuthUrl,
@@ -325,7 +325,7 @@ export default {
       this.selectedJob = null
     },
     async confirmPayment() {
-      if (!this.selectedJob) return
+      if (!this.selectedJob || this.paying) return
 
       const { batchName, semester } = this.paymentForm
       if (!batchName || !semester) {
@@ -338,28 +338,20 @@ export default {
         uni.showLoading({ title: '创建订单中...' })
 
         // 创建订单
-        const orderData = {
-          jobTypeId: this.selectedJob.id,
-          batchName: batchName,
-          semester: semester,
-        }
-        const order = await createOrder(orderData)
+        const order = await createOrder({
+          jobId: this.selectedJob.id,
+          batchName,
+          semester,
+        })
 
-        // 创建支付
-        uni.showLoading({ title: '正在调起支付...' })
-        const payParams = await createPayment(order.orderNo)
-
-        // 调起微信支付
-        await this.invokeWxPayment(payParams)
-
-        // 支付成功
-        uni.showToast({ title: '支付成功', icon: 'success' })
         this.closePaymentModal()
+        uni.showToast({ title: '订单已创建', icon: 'success' })
 
-        // 延迟后跳转到我的页面查看订单
         setTimeout(() => {
-          uni.switchTab({ url: '/pages/mine/index' })
-        }, 1500)
+          uni.navigateTo({
+            url: `/pages/cashier/cashier?orderNo=${order.orderNo}`,
+          })
+        }, 600)
       } catch (err) {
         const message = err?.message || '操作失败'
         uni.showToast({ title: message, icon: 'none' })
@@ -367,55 +359,6 @@ export default {
         this.paying = false
         uni.hideLoading()
       }
-    },
-    invokeWxPayment(params) {
-      return new Promise((resolve, reject) => {
-        // 对于微信小程序
-        if (uni.requestPayment) {
-          uni.requestPayment({
-            provider: 'wxpay',
-            timeStamp: params.timeStamp,
-            nonceStr: params.nonceStr,
-            package: params.package,
-            signType: params.signType || 'RSA',
-            paySign: params.paySign,
-            success: resolve,
-            fail: (err) => {
-              if (err.errMsg === 'requestPayment:fail cancel') {
-                reject(new Error('支付已取消'))
-              } else {
-                reject(new Error(err.errMsg || '支付失败'))
-              }
-            },
-          })
-        }
-        // 对于H5公众号环境
-        else if (typeof WeixinJSBridge !== 'undefined') {
-          WeixinJSBridge.invoke(
-            'getBrandWCPayRequest',
-            {
-              appId: params.appId,
-              timeStamp: params.timeStamp,
-              nonceStr: params.nonceStr,
-              package: params.package,
-              signType: params.signType || 'RSA',
-              paySign: params.paySign,
-            },
-            (res) => {
-              const msg = res?.err_msg || ''
-              if (msg === 'get_brand_wcpay_request:ok') {
-                resolve(res)
-              } else if (msg === 'get_brand_wcpay_request:cancel') {
-                reject(new Error('支付已取消'))
-              } else {
-                reject(new Error(msg || '支付失败'))
-              }
-            }
-          )
-        } else {
-          reject(new Error('当前环境不支持微信支付'))
-        }
-      })
     },
   },
 }
