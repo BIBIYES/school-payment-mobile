@@ -63,7 +63,7 @@ The mobile app has been completely redesigned and implemented with modern UI/UX 
 ### Authentication Flow (WeChat Official Account H5)
 1. When the app loads it checks local storage for a valid token; if none exists it reads `code` from the current URL.
 2. If there is no `code` and the environment is the WeChat built-in browser, `buildOAuthUrl()` (see `src/utils/oauth.js`) is used to redirect the user to `https://open.weixin.qq.com/connect/oauth2/authorize` so that WeChat returns a `code` to the configured redirect URI.
-3. When the page returns with `?code=xxx`, the app calls `/api/public/mini/login` with that code (plus cached nickname/avatar if available). The backend exchanges the code for `openid` and issues a JWT token.
+3. When the page returns with `?code=xxx`, the app calls `/api/users/wechat/login` with that code (plus cached nickname/avatar if available). The backend exchanges the code for `openid` and issues a JWT token.
 4. The client stores `token`, `openId`, `nickname`, `avatarUrl`, and `profileCompleted`, then removes the `code` parameter from the URL.
 5. If `profileCompleted` is `false`, the homepage shows the “完善资料” alert to guide the user to the profile page.
 
@@ -150,7 +150,7 @@ The app stores the following in local storage:
 
 ### Backend Integration
 Ensure these backend APIs are implemented:
-- POST `/api/public/mini/login` - Should accept { code, nickname, avatarUrl }
+- POST `/api/users/wechat/login` - Should accept { code, nickname, avatarUrl }
 - GET `/api/public/students/profile` - Return student profile for current user
 - PUT `/api/public/students/profile` - Update student profile
 - GET `/api/public/job-types/list` - Return all active job types

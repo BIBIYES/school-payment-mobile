@@ -9,7 +9,7 @@ import { httpRequest } from "../utils/request";
 export function miniLogin(code, nickname = "", avatarUrl = "") {
   return new Promise((resolve, reject) => {
     httpRequest({
-      url: "/api/public/mini/login",
+      url: "/api/users/wechat/login",
       method: "POST",
       header: {
         "content-type": "application/json",
