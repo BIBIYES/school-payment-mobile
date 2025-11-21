@@ -1,78 +1,78 @@
 <template>
   <view class="page">
-    <!-- 用户欢迎区 -->
-    <view class="welcome-section" v-if="userInfo.nickname">
-      <view class="user-info">
-        <image
-          class="avatar"
-          :src="userInfo.avatarUrl || '/static/default-avatar.png'"
-          mode="aspectFill"
-        />
-        <view class="greeting">
-          <text class="hello">你好，</text>
-          <text class="nickname">{{ userInfo.nickname }}</text>
+    <view class="top-area">
+      <!-- 平台标题区 -->
+      <view class="hero-section">
+        <view class="hero-badge">DEMO VERSION</view>
+        <text class="hero-title">重庆机电职业技术大学缴费平台</text>
+        <text class="hero-subtitle">
+          Chongqing Electromechanical University Payment Platform
+        </text>
+        <view class="hero-user" v-if="userInfo.nickname">
+          <image
+            class="hero-avatar"
+            :src="userInfo.avatarUrl || '/static/default-avatar.png'"
+            mode="aspectFill"
+          />
+          <view class="hero-greeting">
+            <text class="hero-hello">你好，</text>
+            <text class="hero-nickname">{{ userInfo.nickname }}</text>
+          </view>
         </view>
       </view>
     </view>
 
-    <!-- 资料完成提示 -->
-    <view class="profile-alert" v-if="!profileCompleted">
-      <view class="alert-content">
-        <view class="alert-icon">!</view>
-        <view class="alert-text">
-          <text class="alert-title">请完善个人信息</text>
-          <text class="alert-desc">完善信息后才能进行缴费</text>
+    <view class="content">
+      <!-- 资料完成提示 -->
+      <view class="profile-alert" v-if="!profileCompleted">
+        <view class="alert-content">
+          <view class="alert-icon">!</view>
+          <view class="alert-text">
+            <text class="alert-title">请完善个人信息</text>
+            <text class="alert-desc">完善信息后才能进行缴费</text>
+          </view>
         </view>
-      </view>
-      <button class="alert-btn" @click="goToProfile">去完善</button>
-    </view>
-
-    <!-- 工种列表 -->
-    <view class="job-types-section">
-      <view class="section-header">
-        <text class="section-title">可缴费项目</text>
-        <text class="section-subtitle">选择需要缴费的工种项目</text>
+        <button class="alert-btn" @click="goToProfile">去完善</button>
       </view>
 
-      <view class="loading-state" v-if="loading">
-        <text class="loading-text">加载中...</text>
-      </view>
+      <!-- 工种列表 -->
+      <view class="job-types-section">
+        <view class="loading-state" v-if="loading">
+          <text class="loading-text">加载中...</text>
+        </view>
 
-      <view class="empty-state" v-else-if="jobTypes.length === 0">
-        <text class="empty-text">暂无可缴费项目</text>
-      </view>
+        <view class="empty-state" v-else-if="jobTypes.length === 0">
+          <text class="empty-text">暂无可缴费项目</text>
+        </view>
 
-      <view class="job-list" v-else>
-        <view
-          class="job-card"
-          v-for="job in jobTypes"
-          :key="job.id"
-        >
-          <view class="job-header">
-            <text class="job-name">{{ job.jobName }}</text>
-            <view class="job-level">{{ job.level }}</view>
-          </view>
-
-          <view class="job-detail" v-if="job.software">
-            <text class="detail-label">软件：</text>
-            <text class="detail-value">{{ job.software }}</text>
-          </view>
-
-          <view class="job-footer">
-            <view class="price-section">
-              <text class="price-label">缴费金额</text>
-              <view class="price-wrapper">
-                <text class="price-symbol">¥</text>
-                <text class="price-value">{{ formatFee(job) }}</text>
-              </view>
+        <view class="job-list" v-else>
+          <view class="job-card" v-for="job in jobTypes" :key="job.id">
+            <view class="job-header">
+              <text class="job-name">{{ job.jobName }}</text>
+              <view class="job-level">{{ job.level }}</view>
             </view>
-            <button
-              class="pay-btn"
-              @click="handlePayClick(job)"
-              :disabled="paying"
-            >
-              {{ paying ? '处理中...' : '立即缴费' }}
-            </button>
+
+            <view class="job-detail" v-if="job.software">
+              <text class="detail-label">软件：</text>
+              <text class="detail-value">{{ job.software }}</text>
+            </view>
+
+            <view class="job-footer">
+              <view class="price-section">
+                <text class="price-label">缴费金额</text>
+                <view class="price-wrapper">
+                  <text class="price-symbol">¥</text>
+                  <text class="price-value">{{ formatFee(job) }}</text>
+                </view>
+              </view>
+              <button
+                class="pay-btn"
+                @click="handlePayClick(job)"
+                :disabled="paying"
+              >
+                {{ paying ? "处理中..." : "立即缴费" }}
+              </button>
+            </view>
           </view>
         </view>
       </view>
@@ -106,13 +106,17 @@
           </view>
         </view>
         <view class="modal-footer">
-          <button class="modal-btn cancel-btn" @click="closePaymentModal">取消</button>
+          <button class="modal-btn cancel-btn" @click="closePaymentModal">
+            取消
+          </button>
           <button
             class="modal-btn confirm-btn"
             @click="confirmPayment"
-            :disabled="paying || !paymentForm.batchName || !paymentForm.semester"
+            :disabled="
+              paying || !paymentForm.batchName || !paymentForm.semester
+            "
           >
-            {{ paying ? '处理中...' : '确认缴费' }}
+            {{ paying ? "处理中..." : "确认缴费" }}
           </button>
         </view>
       </view>
@@ -121,22 +125,22 @@
 </template>
 
 <script>
-import { miniLogin } from '@/services/auth.js'
-import { getJobTypeList } from '@/services/jobType.js'
-import { createOrder } from '@/services/order.js'
-import { getProfile } from '@/services/student.js'
+import { miniLogin } from "@/services/auth.js";
+import { getJobTypeList } from "@/services/jobType.js";
+import { createOrder } from "@/services/order.js";
+import { getProfile } from "@/services/student.js";
 import {
   buildOAuthUrl,
   getQueryParam,
   removeQueryParam,
-} from '@/utils/oauth.js'
+} from "@/utils/oauth.js";
 
 export default {
   data() {
     return {
       userInfo: {
-        nickname: '',
-        avatarUrl: '',
+        nickname: "",
+        avatarUrl: "",
       },
       profileCompleted: false,
       jobTypes: [],
@@ -145,125 +149,126 @@ export default {
       showPaymentModal: false,
       selectedJob: null,
       paymentForm: {
-        batchName: '',
-        semester: '',
+        batchName: "",
+        semester: "",
       },
-    }
+    };
   },
   onLoad() {
-    this.initPage()
+    this.initPage();
   },
   onShow() {
     // 每次显示页面时刷新资料完成状态
-    this.checkProfileStatus()
+    this.checkProfileStatus();
   },
   methods: {
     async initPage() {
       try {
-        const loggedIn = await this.performLogin()
-        if (!loggedIn) return
-        await this.loadJobTypes()
+        const loggedIn = await this.performLogin();
+        if (!loggedIn) return;
+        await this.loadJobTypes();
       } catch (err) {
-        console.error('初始化页面失败:', err)
+        console.error("初始化页面失败:", err);
       }
     },
     formatFee(job) {
-      const fee = job?.feeAmount ?? job?.fee
-      if (fee === null || fee === undefined || fee === '') {
-        return '0.00'
+      const fee = job?.feeAmount ?? job?.fee;
+      if (fee === null || fee === undefined || fee === "") {
+        return "0.00";
       }
-      const amount = Number(fee)
+      const amount = Number(fee);
       if (!Number.isNaN(amount)) {
-        return amount.toFixed(2)
+        return amount.toFixed(2);
       }
-      const parsed = parseFloat(fee)
-      return Number.isNaN(parsed) ? '0.00' : parsed.toFixed(2)
+      const parsed = parseFloat(fee);
+      return Number.isNaN(parsed) ? "0.00" : parsed.toFixed(2);
     },
     async performLogin() {
       try {
-        uni.showLoading({ title: '登录中...' })
+        uni.showLoading({ title: "登录中..." });
 
-        const cachedToken = uni.getStorageSync('token')
+        const cachedToken = uni.getStorageSync("token");
         if (cachedToken) {
-          this.loadUserInfoFromStorage()
-          return true
+          this.loadUserInfoFromStorage();
+          return true;
         }
 
-        const code = getQueryParam('code')
+        const code = getQueryParam("code");
         if (!code) {
-          this.redirectToOAuth()
-          return false
+          this.redirectToOAuth();
+          return false;
         }
 
-        const nickname = uni.getStorageSync('nickname') || ''
-        const avatarUrl = uni.getStorageSync('avatarUrl') || ''
+        const nickname = uni.getStorageSync("nickname") || "";
+        const avatarUrl = uni.getStorageSync("avatarUrl") || "";
 
-        const authInfo = await miniLogin(code, nickname, avatarUrl)
+        const authInfo = await miniLogin(code, nickname, avatarUrl);
 
-        const finalNickname = authInfo.nickname || nickname
-        const finalAvatar = authInfo.avatarUrl || avatarUrl
+        const finalNickname = authInfo.nickname || nickname;
+        const finalAvatar = authInfo.avatarUrl || avatarUrl;
 
-        uni.setStorageSync('token', authInfo.token)
-        uni.setStorageSync('openId', authInfo.openId)
-        if (finalNickname) uni.setStorageSync('nickname', finalNickname)
-        if (finalAvatar) uni.setStorageSync('avatarUrl', finalAvatar)
+        uni.setStorageSync("token", authInfo.token);
+        uni.setStorageSync("openId", authInfo.openId);
+        if (finalNickname) uni.setStorageSync("nickname", finalNickname);
+        if (finalAvatar) uni.setStorageSync("avatarUrl", finalAvatar);
 
-        this.userInfo.nickname = finalNickname
-        this.userInfo.avatarUrl = finalAvatar
+        this.userInfo.nickname = finalNickname;
+        this.userInfo.avatarUrl = finalAvatar;
 
-        removeQueryParam('code')
+        removeQueryParam("code");
 
         if (authInfo.profileCompleted !== undefined) {
-          this.profileCompleted = authInfo.profileCompleted
-          uni.setStorageSync('profileCompleted', authInfo.profileCompleted)
+          this.profileCompleted = authInfo.profileCompleted;
+          uni.setStorageSync("profileCompleted", authInfo.profileCompleted);
         } else {
-          await this.checkProfileStatus()
+          await this.checkProfileStatus();
         }
 
-        return true
+        return true;
       } catch (err) {
-        console.error('登录失败:', err)
-        uni.showToast({ title: err?.message || '登录失败', icon: 'none' })
-        this.loadUserInfoFromStorage()
-        return false
+        console.error("登录失败:", err);
+        uni.showToast({ title: err?.message || "登录失败", icon: "none" });
+        this.loadUserInfoFromStorage();
+        return false;
       } finally {
-        uni.hideLoading()
+        uni.hideLoading();
       }
     },
     redirectToOAuth() {
-      if (typeof window === 'undefined') return
+      if (typeof window === "undefined") return;
       if (!this.isWeChatBrowser()) {
         uni.showModal({
-          title: '提示',
-          content: '请在微信内打开以完成登录',
+          title: "提示",
+          content: "请在微信内打开以完成登录",
           showCancel: false,
-        })
-        return
+        });
+        return;
       }
-      const oauthUrl = buildOAuthUrl()
+      const oauthUrl = buildOAuthUrl();
       if (oauthUrl) {
-        window.location.replace(oauthUrl)
+        window.location.replace(oauthUrl);
       }
     },
     isWeChatBrowser() {
-      if (typeof window === 'undefined' || !window.navigator) return false
-      const ua = window.navigator.userAgent || ''
-      return /micromessenger/i.test(ua)
+      if (typeof window === "undefined" || !window.navigator) return false;
+      const ua = window.navigator.userAgent || "";
+      return /micromessenger/i.test(ua);
     },
     loadUserInfoFromStorage() {
-      const nickname = uni.getStorageSync('nickname')
-      const avatarUrl = uni.getStorageSync('avatarUrl')
-      const profileCompleted = uni.getStorageSync('profileCompleted')
+      const nickname = uni.getStorageSync("nickname");
+      const avatarUrl = uni.getStorageSync("avatarUrl");
+      const profileCompleted = uni.getStorageSync("profileCompleted");
 
-      if (nickname) this.userInfo.nickname = nickname
-      if (avatarUrl) this.userInfo.avatarUrl = avatarUrl
-      if (profileCompleted !== undefined) this.profileCompleted = profileCompleted
+      if (nickname) this.userInfo.nickname = nickname;
+      if (avatarUrl) this.userInfo.avatarUrl = avatarUrl;
+      if (profileCompleted !== undefined)
+        this.profileCompleted = profileCompleted;
     },
     async checkProfileStatus() {
-      const token = uni.getStorageSync('token')
-      if (!token) return
+      const token = uni.getStorageSync("token");
+      if (!token) return;
       try {
-        const profile = await getProfile()
+        const profile = await getProfile();
         // 检查必填字段是否都已填写
         const isCompleted = !!(
           profile.name &&
@@ -273,143 +278,192 @@ export default {
           profile.department &&
           profile.major &&
           profile.phone
-        )
-        this.profileCompleted = isCompleted
-        uni.setStorageSync('profileCompleted', isCompleted)
+        );
+        this.profileCompleted = isCompleted;
+        uni.setStorageSync("profileCompleted", isCompleted);
       } catch (err) {
         // 如果获取失败，认为未完成
-        this.profileCompleted = false
-        console.error('检查资料状态失败:', err)
+        this.profileCompleted = false;
+        console.error("检查资料状态失败:", err);
       }
     },
     async loadJobTypes() {
       try {
-        this.loading = true
-        const data = await getJobTypeList()
-        this.jobTypes = data || []
+        this.loading = true;
+        const data = await getJobTypeList();
+        this.jobTypes = data || [];
       } catch (err) {
-        const message = err?.message || '加载失败'
-        uni.showToast({ title: message, icon: 'none' })
+        const message = err?.message || "加载失败";
+        uni.showToast({ title: message, icon: "none" });
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     goToProfile() {
-      uni.navigateTo({ url: '/pages/profile/profile' })
+      uni.navigateTo({ url: "/pages/profile/profile" });
     },
     async handlePayClick(job) {
       // 再次检查资料是否完成
       if (!this.profileCompleted) {
         uni.showModal({
-          title: '提示',
-          content: '请先完善个人信息后再进行缴费',
+          title: "提示",
+          content: "请先完善个人信息后再进行缴费",
           showCancel: true,
-          confirmText: '去完善',
+          confirmText: "去完善",
           success: (res) => {
             if (res.confirm) {
-              this.goToProfile()
+              this.goToProfile();
             }
           },
-        })
-        return
+        });
+        return;
       }
 
       // 显示缴费信息弹窗
-      this.selectedJob = job
-      this.showPaymentModal = true
+      this.selectedJob = job;
+      this.showPaymentModal = true;
     },
     closePaymentModal() {
-      this.showPaymentModal = false
-      this.paymentForm.batchName = ''
-      this.paymentForm.semester = ''
-      this.selectedJob = null
+      this.showPaymentModal = false;
+      this.paymentForm.batchName = "";
+      this.paymentForm.semester = "";
+      this.selectedJob = null;
     },
     async confirmPayment() {
-      if (!this.selectedJob || this.paying) return
+      if (!this.selectedJob || this.paying) return;
 
-      const { batchName, semester } = this.paymentForm
+      const { batchName, semester } = this.paymentForm;
       if (!batchName || !semester) {
-        uni.showToast({ title: '请填写完整信息', icon: 'none' })
-        return
+        uni.showToast({ title: "请填写完整信息", icon: "none" });
+        return;
       }
 
       try {
-        this.paying = true
-        uni.showLoading({ title: '创建订单中...' })
+        this.paying = true;
+        uni.showLoading({ title: "创建订单中..." });
 
         // 创建订单
         const order = await createOrder({
           jobId: this.selectedJob.id,
           batchName,
           semester,
-        })
+        });
 
-        this.closePaymentModal()
-        uni.showToast({ title: '订单已创建', icon: 'success' })
+        this.closePaymentModal();
+        uni.showToast({ title: "订单已创建", icon: "success" });
 
         setTimeout(() => {
           uni.navigateTo({
             url: `/pages/cashier/cashier?orderNo=${order.orderNo}`,
-          })
-        }, 600)
+          });
+        }, 600);
       } catch (err) {
-        const message = err?.message || '操作失败'
-        uni.showToast({ title: message, icon: 'none' })
+        const message = err?.message || "操作失败";
+        uni.showToast({ title: message, icon: "none" });
       } finally {
-        this.paying = false
-        uni.hideLoading()
+        this.paying = false;
+        uni.hideLoading();
       }
     },
   },
-}
+};
 </script>
 
 <style scoped>
 .page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #0f62fe 0%, #f6f7fb 280rpx);
+  background: #f6f7fb;
   padding-bottom: 120rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-/* 欢迎区 */
-.welcome-section {
-  padding: 48rpx 32rpx 32rpx;
+.top-area {
+  padding: 40rpx 32rpx 160rpx;
+  background: linear-gradient(180deg, #1b57ff 0%, #0f62fe 100%);
+  border-bottom-left-radius: 48rpx;
+  border-bottom-right-radius: 48rpx;
 }
 
-.user-info {
+.hero-section {
+  padding: 40rpx 36rpx;
+  border-radius: 32rpx;
+  background: linear-gradient(135deg, #3d7bff, #5aa2ff);
+  box-shadow: 0 20rpx 48rpx rgba(10, 70, 255, 0.35);
+  border: 2rpx solid rgba(255, 255, 255, 0.25);
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 20rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  letter-spacing: 4rpx;
+  color: #0f62fe;
+  background: #ffffff;
+  font-weight: 600;
+  margin-bottom: 24rpx;
+}
+
+.hero-title {
+  display: block;
+  color: #ffffff;
+  font-size: 48rpx;
+  font-weight: 700;
+  margin-bottom: 12rpx;
+}
+
+.hero-subtitle {
+  display: block;
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 2rpx;
+}
+
+.hero-user {
+  margin-top: 36rpx;
+  padding-top: 32rpx;
+  border-top: 2rpx solid rgba(255, 255, 255, 0.25);
   display: flex;
   align-items: center;
   gap: 24rpx;
 }
 
-.avatar {
+.hero-avatar {
   width: 96rpx;
   height: 96rpx;
   border-radius: 48rpx;
-  border: 4rpx solid rgba(255, 255, 255, 0.3);
+  border: 4rpx solid rgba(255, 255, 255, 0.4);
 }
 
-.greeting {
+.hero-greeting {
   flex: 1;
 }
 
-.hello {
+.hero-hello {
   display: block;
   font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 8rpx;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 6rpx;
 }
 
-.nickname {
+.hero-nickname {
   display: block;
   font-size: 36rpx;
   font-weight: 600;
-  color: #fff;
+  color: #ffffff;
+}
+
+.content {
+  margin-top: -120rpx;
+  padding: 0 32rpx 40rpx;
 }
 
 /* 资料提醒 */
 .profile-alert {
-  margin: 0 32rpx 32rpx;
+  margin: 0 0 32rpx;
   background: linear-gradient(135deg, #fff5e6 0%, #fff9f0 100%);
   border-radius: 24rpx;
   padding: 24rpx;
@@ -470,7 +524,7 @@ export default {
 
 /* 工种列表 */
 .job-types-section {
-  padding: 0 32rpx;
+  padding: 0;
 }
 
 .section-header {
@@ -488,7 +542,7 @@ export default {
 .section-subtitle {
   display: block;
   font-size: 26rpx;
-  color: #8a8ea3;
+  color: #ffffff;
 }
 
 .loading-state,
