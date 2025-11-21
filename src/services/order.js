@@ -116,10 +116,10 @@ export function getOrderDetail(orderNo) {
 }
 
 /**
- * 创建支付单，返回微信支付参数
+ * 创建订单支付参数，返回微信支付参数
  * @param {string} orderNo 订单号
  */
-export function createPayment(orderNo) {
+export function createOrderPayParams(orderNo) {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync("token");
     const headers = {

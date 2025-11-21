@@ -84,7 +84,7 @@
 </template>
 
 <script>
-import { getOrderDetail, createPayment } from '@/services/order.js'
+import { getOrderDetail, createOrderPayParams } from '@/services/order.js'
 
 export default {
   data() {
@@ -228,7 +228,7 @@ export default {
       try {
         this.paying = true
         uni.showLoading({ title: '正在调起支付...' })
-        const payParams = await createPayment(this.order.orderNo)
+        const payParams = await createOrderPayParams(this.order.orderNo)
         await this.invokeWxPayment(payParams)
         uni.showToast({ title: '支付成功', icon: 'success' })
         setTimeout(() => {

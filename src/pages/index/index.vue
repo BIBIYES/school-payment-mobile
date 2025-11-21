@@ -79,18 +79,18 @@
     </view>
 
     <!-- 缴费信息弹窗 -->
-    <view class="modal-mask" v-if="showPaymentModal" @click="closePaymentModal">
+    <view class="modal-mask" v-if="showOrderModal" @click="closeOrderModal">
       <view class="modal-container" @click.stop>
         <view class="modal-header">
           <text class="modal-title">填写缴费信息</text>
-          <text class="modal-close" @click="closePaymentModal">×</text>
+          <text class="modal-close" @click="closeOrderModal">×</text>
         </view>
         <view class="modal-body">
           <view class="modal-field">
             <text class="field-label">批次名称</text>
             <input
               class="field-input"
-              v-model="paymentForm.batchName"
+              v-model="orderForm.batchName"
               placeholder="请输入批次名称，如：2024年春季"
               placeholder-class="input-placeholder"
             />
@@ -99,21 +99,21 @@
             <text class="field-label">学期</text>
             <input
               class="field-input"
-              v-model="paymentForm.semester"
+              v-model="orderForm.semester"
               placeholder="请输入学期，如：2023-2024学年第二学期"
               placeholder-class="input-placeholder"
             />
           </view>
         </view>
         <view class="modal-footer">
-          <button class="modal-btn cancel-btn" @click="closePaymentModal">
+          <button class="modal-btn cancel-btn" @click="closeOrderModal">
             取消
           </button>
           <button
             class="modal-btn confirm-btn"
-            @click="confirmPayment"
+            @click="confirmOrder"
             :disabled="
-              paying || !paymentForm.batchName || !paymentForm.semester
+              paying || !orderForm.batchName || !orderForm.semester
             "
           >
             {{ paying ? "处理中..." : "确认缴费" }}
@@ -146,9 +146,9 @@ export default {
       jobTypes: [],
       loading: false,
       paying: false,
-      showPaymentModal: false,
+      showOrderModal: false,
       selectedJob: null,
-      paymentForm: {
+      orderForm: {
         batchName: "",
         semester: "",
       },
@@ -321,18 +321,18 @@ export default {
 
       // 显示缴费信息弹窗
       this.selectedJob = job;
-      this.showPaymentModal = true;
+      this.showOrderModal = true;
     },
-    closePaymentModal() {
-      this.showPaymentModal = false;
-      this.paymentForm.batchName = "";
-      this.paymentForm.semester = "";
+    closeOrderModal() {
+      this.showOrderModal = false;
+      this.orderForm.batchName = "";
+      this.orderForm.semester = "";
       this.selectedJob = null;
     },
-    async confirmPayment() {
+    async confirmOrder() {
       if (!this.selectedJob || this.paying) return;
 
-      const { batchName, semester } = this.paymentForm;
+      const { batchName, semester } = this.orderForm;
       if (!batchName || !semester) {
         uni.showToast({ title: "请填写完整信息", icon: "none" });
         return;
@@ -349,7 +349,7 @@ export default {
           semester,
         });
 
-        this.closePaymentModal();
+        this.closeOrderModal();
         uni.showToast({ title: "订单已创建", icon: "success" });
 
         setTimeout(() => {
