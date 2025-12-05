@@ -67,12 +67,8 @@
               <text class="info-value">{{ order.jobName }}</text>
             </view>
             <view class="order-info-row">
-              <text class="info-label">批次</text>
-              <text class="info-value">{{ order.batchName }}</text>
-            </view>
-            <view class="order-info-row">
               <text class="info-label">学期</text>
-              <text class="info-value">{{ order.semester }}</text>
+              <text class="info-value term-text">{{ order.termName || '-' }}</text>
             </view>
             <view class="order-info-row">
               <text class="info-label">创建时间</text>
@@ -470,6 +466,11 @@ export default {
   font-size: 26rpx;
   color: #1f2a44;
   font-weight: 500;
+}
+
+.term-text {
+  font-weight: 700;
+  color: #0f62fe;
 }
 
 .order-footer {

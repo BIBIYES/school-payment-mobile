@@ -86,23 +86,22 @@
           <text class="modal-close" @click="closeOrderModal">×</text>
         </view>
         <view class="modal-body">
-          <view class="modal-field">
-            <text class="field-label">批次名称</text>
-            <input
-              class="field-input"
-              v-model="orderForm.batchName"
-              placeholder="请输入批次名称，如：2024年春季"
-              placeholder-class="input-placeholder"
-            />
+          <view v-if="!activeTerm" class="no-term-alert">
+            <text class="alert-title">当前缴费未开启</text>
+            <text class="alert-desc">请联系管理员开启学期后再尝试。</text>
           </view>
           <view class="modal-field">
-            <text class="field-label">学期</text>
-            <input
-              class="field-input"
-              v-model="orderForm.semester"
-              placeholder="请输入学期，如：2023-2024学年第二学期"
-              placeholder-class="input-placeholder"
-            />
+            <text class="field-label">缴费项目</text>
+            <text class="field-value">{{ selectedJob?.jobName }}</text>
+          </view>
+          <view class="modal-field">
+            <text class="field-label">当前学期</text>
+            <text class="field-value term-text">
+              {{ activeTerm?.name || "未开启" }}
+            </text>
+          </view>
+          <view class="modal-tip">
+            * 学期由学校统一开启，当前仅允许一个学期开启。
           </view>
         </view>
         <view class="modal-footer">
@@ -112,9 +111,7 @@
           <button
             class="modal-btn confirm-btn"
             @click="confirmOrder"
-            :disabled="
-              paying || !orderForm.batchName || !orderForm.semester
-            "
+            :disabled="paying || !activeTerm"
           >
             {{ paying ? "处理中..." : "确认缴费" }}
           </button>
@@ -129,6 +126,7 @@ import { miniLogin } from "@/services/auth.js";
 import { getJobTypeList } from "@/services/jobType.js";
 import { createOrder } from "@/services/order.js";
 import { getProfile } from "@/services/student.js";
+import { getActiveTerm } from "@/services/term.js";
 import {
   buildOAuthUrl,
   getQueryParam,
@@ -146,12 +144,9 @@ export default {
       jobTypes: [],
       loading: false,
       paying: false,
+      activeTerm: null,
       showOrderModal: false,
       selectedJob: null,
-      orderForm: {
-        batchName: "",
-        semester: "",
-      },
     };
   },
   onLoad() {
@@ -166,6 +161,7 @@ export default {
       try {
         const loggedIn = await this.performLogin();
         if (!loggedIn) return;
+        await this.loadActiveTerm();
         await this.loadJobTypes();
       } catch (err) {
         console.error("初始化页面失败:", err);
@@ -299,6 +295,20 @@ export default {
         this.loading = false;
       }
     },
+    async loadActiveTerm(showToast = false) {
+      try {
+        const term = await getActiveTerm();
+        this.activeTerm = term;
+        if (!term && showToast) {
+          uni.showToast({ title: "当前缴费未开启", icon: "none" });
+        }
+      } catch (err) {
+        console.error("获取学期失败:", err);
+        if (showToast) {
+          uni.showToast({ title: err?.message || "学期获取失败", icon: "none" });
+        }
+      }
+    },
     goToProfile() {
       uni.navigateTo({ url: "/pages/profile/profile" });
     },
@@ -322,19 +332,18 @@ export default {
       // 显示缴费信息弹窗
       this.selectedJob = job;
       this.showOrderModal = true;
+      // 每次点击尝试刷新学期状态
+      this.loadActiveTerm();
     },
     closeOrderModal() {
       this.showOrderModal = false;
-      this.orderForm.batchName = "";
-      this.orderForm.semester = "";
       this.selectedJob = null;
     },
     async confirmOrder() {
       if (!this.selectedJob || this.paying) return;
 
-      const { batchName, semester } = this.orderForm;
-      if (!batchName || !semester) {
-        uni.showToast({ title: "请填写完整信息", icon: "none" });
+      if (!this.activeTerm) {
+        uni.showToast({ title: "当前缴费未开启", icon: "none" });
         return;
       }
 
@@ -345,8 +354,6 @@ export default {
         // 创建订单
         const order = await createOrder({
           jobId: this.selectedJob.id,
-          batchName,
-          semester,
         });
 
         this.closeOrderModal();
@@ -711,6 +718,27 @@ export default {
   margin-bottom: 0;
 }
 
+.no-term-alert {
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  background: #fff4e5;
+  border: 2rpx solid #ffd9a8;
+  border-radius: 12rpx;
+}
+
+.no-term-alert .alert-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #b65c00;
+  margin-bottom: 6rpx;
+}
+
+.no-term-alert .alert-desc {
+  font-size: 24rpx;
+  color: #c07921;
+}
+
 .field-label {
   display: block;
   font-size: 28rpx;
@@ -719,20 +747,27 @@ export default {
   margin-bottom: 16rpx;
 }
 
-.field-input {
+.field-value {
   width: 100%;
-  height: 88rpx;
+  min-height: 88rpx;
   background: #f6f8ff;
   border: 2rpx solid #e5e8f0;
   border-radius: 12rpx;
-  padding: 0 24rpx;
+  padding: 20rpx 24rpx;
   font-size: 28rpx;
   color: #1f2a44;
   box-sizing: border-box;
 }
 
-.input-placeholder {
-  color: #a8aec0;
+.term-text {
+  font-weight: 700;
+  color: #0f62fe;
+}
+
+.modal-tip {
+  font-size: 24rpx;
+  color: #8a8ea3;
+  line-height: 1.6;
 }
 
 .modal-footer {

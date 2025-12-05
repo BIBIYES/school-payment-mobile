@@ -4,8 +4,6 @@ import { httpRequest } from "../utils/request";
  * 创建订单
  * @param {Object} data 订单数据
  * @param {number} data.jobId 工种ID
- * @param {string} data.batchName 批次名称
- * @param {string} data.semester 学期
  */
 export function createOrder(data) {
   return new Promise((resolve, reject) => {

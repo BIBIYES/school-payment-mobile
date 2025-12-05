@@ -39,12 +39,8 @@
           <text class="info-value">{{ order.orderNo }}</text>
         </view>
         <view class="info-row">
-          <text class="info-label">批次信息</text>
-          <text class="info-value">{{ order.batchName || '-' }}</text>
-        </view>
-        <view class="info-row">
-          <text class="info-label">学期/期次</text>
-          <text class="info-value">{{ order.semester || '-' }}</text>
+          <text class="info-label">学期</text>
+          <text class="info-value">{{ order.termName || '-' }}</text>
         </view>
         <view class="info-row">
           <text class="info-label">创建时间</text>
