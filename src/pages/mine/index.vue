@@ -78,6 +78,21 @@
               <text class="info-label">创建时间</text>
               <text class="info-value">{{ formatDate(order.createdAt) }}</text>
             </view>
+            <view
+              class="group-row"
+              v-if="getStatusCode(order) === 1 && resolveUrl(order.qqGroupImagePath)"
+            >
+              <view class="group-text">
+                <text class="info-label">加群二维码</text>
+                <text class="info-value">长按或点击保存，获取学习通知</text>
+              </view>
+              <image
+                class="group-thumb"
+                :src="resolveUrl(order.qqGroupImagePath)"
+                mode="aspectFill"
+                @click="previewImage(resolveUrl(order.qqGroupImagePath))"
+              />
+            </view>
           </view>
 
           <view class="order-footer">
@@ -154,6 +169,18 @@ export default {
     },
     goToHome() {
       uni.switchTab({ url: '/pages/index/index' })
+    },
+    resolveUrl(url = '') {
+      if (!url) return ''
+      if (/^https?:\/\//i.test(url)) return url
+      const base = import.meta.env?.VITE_API_BASE_URL || ''
+      if (!base) return url
+      return url.startsWith('/') ? `${base}${url}` : `${base.replace(/\/$/, '')}/${url}`
+    },
+    previewImage(url) {
+      const finalUrl = this.resolveUrl(url)
+      if (!finalUrl) return
+      uni.previewImage({ urls: [finalUrl] })
     },
     getStatusCode(order) {
       if (!order) return -1
@@ -451,6 +478,29 @@ export default {
   justify-content: space-between;
   padding-top: 20rpx;
   border-top: 2rpx solid #f0f2f7;
+}
+
+.group-row {
+  margin-top: 12rpx;
+  padding: 16rpx;
+  border: 2rpx dashed #d6def8;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  background: #f7faff;
+}
+
+.group-text {
+  flex: 1;
+}
+
+.group-thumb {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 12rpx;
+  background: #fff;
 }
 
 .price-section {

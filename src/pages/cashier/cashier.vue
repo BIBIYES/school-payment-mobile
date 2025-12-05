@@ -79,6 +79,20 @@
           内完成支付，逾期需重新下单
         </text>
       </view>
+
+      <view v-if="statusCode === 1 && groupImageUrl" class="group-card">
+        <view class="group-header">
+          <text class="group-title">加入官方QQ群</text>
+          <text class="group-subtitle">扫码加群，获取课程通知与学习资料</text>
+        </view>
+        <image
+          class="group-qr"
+          :src="groupImageUrl"
+          mode="aspectFit"
+          @click="previewImage(groupImageUrl)"
+        />
+        <button class="save-btn" @click="previewImage(groupImageUrl)">查看大图/保存</button>
+      </view>
     </view>
   </view>
 </template>
@@ -143,6 +157,14 @@ export default {
       if (this.statusCode === 2) return '支付失败，请重试'
       if (this.statusCode === 3) return '订单已过期'
       return this.paying ? '调起支付中...' : '立即支付'
+    },
+    groupImageUrl() {
+      const url = this.order?.qqGroupImagePath
+      if (!url) return ''
+      if (/^https?:\/\//i.test(url)) return url
+      const base = import.meta.env?.VITE_API_BASE_URL || ''
+      if (!base) return url
+      return url.startsWith('/') ? `${base}${url}` : `${base.replace(/\/$/, '')}/${url}`
     },
   },
   methods: {
@@ -231,9 +253,8 @@ export default {
         const payParams = await createOrderPayParams(this.order.orderNo)
         await this.invokeWxPayment(payParams)
         uni.showToast({ title: '支付成功', icon: 'success' })
-        setTimeout(() => {
-          uni.switchTab({ url: '/pages/mine/index' })
-        }, 1500)
+        this.order.payStatus = 1
+        this.stopCountdown()
       } catch (err) {
         const message = err?.message || '支付失败'
         uni.showToast({ title: message, icon: 'none' })
@@ -287,6 +308,10 @@ export default {
           reject(new Error('当前环境不支持微信支付'))
         }
       })
+    },
+    previewImage(url) {
+      if (!url) return
+      uni.previewImage({ urls: [url] })
     },
   },
 }
@@ -488,5 +513,53 @@ export default {
 .highlight {
   color: #ff7875;
   margin: 0 4rpx;
+}
+
+.group-card {
+  background: linear-gradient(135deg, #f7faff 0%, #eef3ff 100%);
+  border-radius: 24rpx;
+  padding: 28rpx;
+  box-shadow: 0 12rpx 30rpx rgba(15, 98, 254, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.group-header {
+  text-align: center;
+}
+
+.group-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2a44;
+}
+
+.group-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #596074;
+}
+
+.group-qr {
+  width: 360rpx;
+  height: 360rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  border: 2rpx dashed #d6def8;
+}
+
+.save-btn {
+  width: 100%;
+  height: 80rpx;
+  border-radius: 40rpx;
+  background: linear-gradient(90deg, #1b57ff, #0f62fe);
+  color: #fff;
+  border: none;
+  font-size: 28rpx;
+  font-weight: 600;
 }
 </style>
